@@ -66,11 +66,11 @@
 			<artifactId>spring-security-jwt</artifactId>
 			<version>1.1.1.RELEASE</version>
 		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework.security.oauth/spring-security-oauth2 -->
+        <!-- https://mvnrepository.com/artifact/org.springframework.security.oauth.boot/spring-security-oauth2-autoconfigure -->
         <dependency>
-            <groupId>org.springframework.security.oauth</groupId>
-            <artifactId>spring-security-oauth2</artifactId>
-            <version>2.5.2</version>
+            <groupId>org.springframework.security.oauth.boot</groupId>
+            <artifactId>spring-security-oauth2-autoconfigure</artifactId>
+            <version>2.5.14</version>
         </dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
