@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
@@ -40,9 +40,6 @@ public class SecurityConfig {
 
     @Value("${security.signing-key}")
     private String signingKey;
-
-    @Value("${security.encoding-strength}")
-    private Integer encodingStrength;
 
     @Value("${security.security-realm}")
     private String securityRealm;
@@ -81,17 +78,17 @@ public class SecurityConfig {
 
 
     @Bean
-    public JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withSecretKey(new SecretKeySpec(signingKey.getBytes(), "HS256")).build();
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return NimbusJwtDecoder.withJwkSource(jwkSource).build();
     }
 
     @Bean
-    public JwtEncoder jwtEncoder() {
-        return new NimbusJwtEncoder(new SecretKeySpec(signingKey.getBytes(), "HS256"));
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
     }
 
     @Bean
-    public JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource() {
+    public JWKSource<SecurityContext> jwkSource() {
         try {
             byte[] decodedKey = Base64.getDecoder().decode(signingKey);
             X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(decodedKey);
