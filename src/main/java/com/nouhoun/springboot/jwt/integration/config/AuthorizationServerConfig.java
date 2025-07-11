@@ -4,21 +4,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -32,10 +35,8 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
-
 @Configuration
 @EnableWebSecurity
-@EnableAuthorizationServer
 public class AuthorizationServerConfig {
 
     @Value("${security.jwt.client-id}")
@@ -50,25 +51,22 @@ public class AuthorizationServerConfig {
     @Value("${security.jwt.scope-write}")
     private String scopeWrite = "write";
 
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
         RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(clientId)
                 .clientSecret(passwordEncoder.encode(clientSecret))
-                .clientAuthenticationMethod(org.springframework.security.oauth2.core.ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                .authorizationGrantType(org.springframework.security.oauth2.core.AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .scope(scopeRead)
                 .scope(scopeWrite)
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .build();
         return new InMemoryRegisteredClientRepository(registeredClient);
     }
-
 
     @Bean
     public JWKSource<SecurityContext> jwkSource(KeyPair keyPair) {
@@ -98,17 +96,21 @@ public class AuthorizationServerConfig {
         }
     }
 
-
     @Bean
     public AuthorizationServerSettings providerSettings() {
         return AuthorizationServerSettings.builder().build();
     }
 
-
     @Bean
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-        return http.formLogin().and().build();
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+            .oidc(Customizer.withDefaults());	
+        http
+                .exceptionHandling((exceptions) -> exceptions
+                        .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+                );
+        return http.build();
     }
 
     @Bean
