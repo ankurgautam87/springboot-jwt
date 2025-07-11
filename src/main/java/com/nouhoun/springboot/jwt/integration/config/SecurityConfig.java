@@ -1,5 +1,11 @@
 package com.nouhoun.springboot.jwt.integration.config;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +27,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 @Configuration
 @EnableWebSecurity
@@ -77,6 +89,22 @@ public class SecurityConfig {
     @Bean
     public JwtEncoder jwtEncoder() {
         return new NimbusJwtEncoder(new SecretKeySpec(signingKey.getBytes(), "HS256"));
+    }
+
+    @Bean
+    public JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource() {
+        try {
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(signingKey));
+            RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
+
+            RSAKey rsaKey = new RSAKey.Builder(pubKey).build();
+            JWK jwk = rsaKey;
+            JWKSet jwkSet = new JWKSet(jwk);
+            return new ImmutableJWKSet<>(jwkSet);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new IllegalStateException("Cannot create JWKSource", e);
+        }
     }
 
 
