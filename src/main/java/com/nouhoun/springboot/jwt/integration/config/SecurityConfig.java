@@ -1,6 +1,5 @@
 package com.nouhoun.springboot.jwt.integration.config;
 
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -94,15 +93,15 @@ public class SecurityConfig {
     @Bean
     public JWKSource<com.nimbusds.jose.proc.SecurityContext> jwkSource() {
         try {
+            byte[] decodedKey = Base64.getDecoder().decode(signingKey);
+            X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(decodedKey);
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(signingKey));
             RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
-
             RSAKey rsaKey = new RSAKey.Builder(pubKey).build();
             JWK jwk = rsaKey;
             JWKSet jwkSet = new JWKSet(jwk);
             return new ImmutableJWKSet<>(jwkSet);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (IllegalArgumentException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IllegalStateException("Cannot create JWKSource", e);
         }
     }
