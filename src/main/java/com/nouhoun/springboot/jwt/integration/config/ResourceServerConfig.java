@@ -28,7 +28,7 @@ public class ResourceServerConfig {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()).decoder(jwtDecoder())))
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/actuator/**", "/api-docs/**").permitAll()
                 .requestMatchers("/springjwt/**").authenticated()
@@ -47,8 +47,4 @@ public class ResourceServerConfig {
         return jwtAuthenticationConverter;
     }
 
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        return JwtDecoders.fromOidcIssuerLocation(jwkSetUri);
-    }
 }
