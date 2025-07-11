@@ -29,8 +29,8 @@ public class DatasourceConfig {
         EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
         return builder
                 .setType(EmbeddedDatabaseType.H2)
-                .addScript("CREATE TABLE IF NOT EXISTS USER (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, username VARCHAR(255), password VARCHAR(255), role VARCHAR(255))")
-                .addScript("INSERT INTO USER (username, password, role) VALUES ('user', 'password', 'USER') ON DUPLICATE KEY UPDATE username = 'user'")
+                .addScript("CREATE TABLE IF NOT EXISTS USER (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, username VARCHAR(255), password VARCHAR(255), role VARCHAR(255));" +
+                        "INSERT INTO USER (username, password, role) VALUES ('user', 'password', 'USER') ON DUPLICATE KEY UPDATE username = 'user';")
                 .build();
     }
 
